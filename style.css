@@ -239,6 +239,18 @@ textarea.form-control {
     transform: translateY(0);
 }
 
+/* Badge pills ("Catalog Item", the category under each product name,
+   "Storefront Carousel"). Bootstrap 5.3 ships no bg-primary-soft, and
+   its text-primary is still the default blue, so both classes are
+   pinned to the store palette here. */
+.bg-primary-soft {
+    background-color: var(--primary-soft) !important;
+}
+
+.text-primary {
+    color: var(--primary) !important;
+}
+
 /* Table Enhancements */
 .table {
     margin-bottom: 0;

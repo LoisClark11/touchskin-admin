@@ -23,6 +23,18 @@ const DEFAULT_BUTTON_LABEL = "Order Now";
 // Matches the app's own "only N left" threshold, so the dashboard and
 // the storefront agree on what counts as running low.
 const LOW_STOCK = 5;
+
+// The store skincare taxonomy: the same six categories appear as the
+// storefront filter chips and as the products_category_check constraint
+// in supabase/schema.sql. Keep all three lists in step.
+const CATEGORIES = [
+    "Cleansers",
+    "Moisturizers",
+    "Sunscreens",
+    "Serums & Treatments",
+    "Toners",
+    "Masks & Exfoliators"
+];
 const INT32_MIN = -2147483648;
 const INT32_MAX = 2147483647;
 
@@ -871,6 +883,7 @@ function productSignature(product) {
         // row has to repaint the moment that lands.
         product.stock ?? "",
         product.description || "",
+        product.category || "",
         product.image_url || ""
     ]);
 }
@@ -907,8 +920,21 @@ function updateProductRow(row, product) {
         imageCell.innerHTML = renderProductImage(imageUrl);
     }
 
-    // textContent keeps product names from injecting markup into the table
-    row.querySelector(".name-cell").textContent = product.name || "";
+    // textContent keeps product names from injecting markup into the table.
+    // The category badge is built the same way, so the "&" in
+    // "Serums & Treatments" cannot be read as markup either.
+    const nameCell = row.querySelector(".name-cell");
+    nameCell.textContent = product.name || "";
+
+    const staleBadge = nameCell.querySelector(".category-badge");
+    if (staleBadge) staleBadge.remove();
+
+    if (product.category) {
+        const badge = document.createElement("span");
+        badge.className = "category-badge badge bg-primary-soft text-primary mt-1 d-block";
+        badge.textContent = product.category;
+        nameCell.appendChild(badge);
+    }
     row.querySelector(".price-cell").textContent = formatPrice(product.price);
 
     // Restocked and sold through both land here over realtime, so the
@@ -961,6 +987,7 @@ async function addProduct() {
     const priceInput = document.getElementById("price");
     const stockInput = document.getElementById("stock");
     const descriptionInput = document.getElementById("description");
+    const categoryInput = document.getElementById("productCategory");
     const imageFileInput = document.getElementById("imageFile");
     const imageUrlInput = document.getElementById("imageUrl");
     const addMessage = document.getElementById("addMessage");
@@ -1018,6 +1045,7 @@ async function addProduct() {
                 price: priceVal,
                 stock: stockVal,
                 description: descriptionVal,
+                category: categoryInput.value || null,
                 image_url: imageUrl
             }),
             SAVE_TIMEOUT_MS,
@@ -1035,6 +1063,7 @@ async function addProduct() {
         priceInput.value = "";
         stockInput.value = "0";
         descriptionInput.value = "";
+        categoryInput.value = "";
         imageFileInput.value = "";
         imageUrlInput.value = "";
         showImagePreview("add", null);
@@ -1072,6 +1101,7 @@ function editProduct(productId) {
             document.getElementById("editName").value = data.name || "";
             document.getElementById("editPrice").value = data.price ?? "";
             document.getElementById("editStock").value = data.stock ?? 0;
+            document.getElementById("editCategory").value = data.category || "";
             document.getElementById("editDescription").value = data.description || "";
             document.getElementById("editImageFile").value = "";
             document.getElementById("editImageUrl").value = editingImageUrl || "";
@@ -1102,6 +1132,7 @@ async function saveProduct() {
     const priceVal = parsePrice(document.getElementById("editPrice").value);
     const stockVal = parseStock(document.getElementById("editStock").value);
     const descriptionVal = document.getElementById("editDescription").value.trim();
+    const categoryVal = document.getElementById("editCategory").value || null;
     const imageUrlVal = editImageUrlInput.value.trim();
     const editMessage = document.getElementById("editMessage");
 
@@ -1161,6 +1192,7 @@ async function saveProduct() {
             name: nameVal,
             price: priceVal,
             description: descriptionVal,
+            category: categoryVal,
             image_url: imageUrl
         };
 
@@ -2837,6 +2869,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const editImageUrlInput = document.getElementById("editImageUrl");
     const editImageFileInput = document.getElementById("editImageFile");
     const addMessage = document.getElementById("addMessage");
+
+    // Build both category selects from CATEGORIES so the dashboard can
+    // never drift from the storefront chips or the SQL check constraint.
+    for (const selectId of ["productCategory", "editCategory"]) {
+        const select = document.getElementById(selectId);
+
+        for (const category of CATEGORIES) {
+            const option = document.createElement("option");
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
+        }
+    }
 
     document.getElementById("loginForm").addEventListener("submit", handleLogin);
     document.getElementById("logoutButton").addEventListener("click", handleLogout);

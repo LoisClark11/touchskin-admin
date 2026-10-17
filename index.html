@@ -156,6 +156,13 @@
                                     <input type="number" id="stock" class="form-control" placeholder="0" min="0" step="1" value="0">
                                     <div class="form-text">Falls automatically as orders are placed. 0 means sold out.</div>
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="productCategory" class="form-label">Category</label>
+                                    <select id="productCategory" class="form-select">
+                                        <option value="">No category (shows only under All Products)</option>
+                                    </select>
+                                    <div class="form-text">Drives the filter chips on the storefront.</div>
+                                </div>
                                 
                                 <div class="col-md-5">
                                     <label for="imageFile" class="form-label">Upload Image File</label>
@@ -507,6 +514,13 @@
                     <label for="editStock" class="form-label">Stock (units on hand)</label>
                     <input type="number" id="editStock" class="form-control" min="0" step="1" placeholder="0">
                     <div class="form-text">Lowered automatically by every order. Set it here to restock.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="editCategory" class="form-label">Category</label>
+                    <select id="editCategory" class="form-select">
+                        <option value="">No category (shows only under All Products)</option>
+                    </select>
+                    <div class="form-text">Drives the filter chips on the storefront.</div>
                 </div>
                 <div class="mb-3">
                     <label for="editDescription" class="form-label">Description</label>
