@@ -1,0 +1,196 @@
+﻿-- ============================================================================
+-- Admin Dashboard -- Supabase notes
+--
+-- The authoritative schema for this project (products, profiles, cart_items,
+-- orders, RLS policies, the signup trigger and the realtime publication) is
+-- the one already applied to your project. Do NOT re-run a competing schema
+-- from this folder: two conflicting policy sets would silently OR together.
+--
+-- Everything the admin dashboard needs is already in place:
+--
+--   public.products
+--     id           uuid primary key
+--     name         text not null
+--     price        numeric(12,2) not null check (price >= 0)
+--     description  text
+--     image_url    text
+--     stock        integer not null default 0 check (stock >= 0)
+--     created_at   timestamptz
+--     updated_at   timestamptz
+--
+--   stock is set from the dashboard and lowered only by the place_order
+--   function, in section 2b of the authoritative schema. Both apps read
+--   the one column over realtime, so neither holds a copy that could
+--   drift.
+--
+--   public.featured_slides
+--     id, title, subtitle, description, button_label,
+--     banner_url, item_image_url, item_name, item_price,
+--     product_id (NOT NULL, on delete cascade),
+--     display_order, is_active,
+--     created_at, updated_at
+--
+--   RLS on products and featured_slides
+--     select  -> everyone        (so the storefront can browse while logged out)
+--     insert  -> admins only     (via public.is_admin())
+--     update  -> admins only
+--     delete  -> admins only
+--
+--   RLS on orders
+--     select  -> own orders for a customer, ALL orders for an admin
+--     insert  -> none (only place_order() writes, via SECURITY DEFINER)
+--     update  -> own, and only to cancel (a guard trigger blocks edits)
+--     delete  -> own
+--
+--   The admin read is SELECT only, so the order log panel cannot
+--   rewrite history. customer_email is snapshotted by place_order()
+--   from the caller's own auth session.
+--
+--   realtime publication -> public.products, public.cart_items,
+--                          public.orders, public.profiles,
+--                          public.featured_slides
+--
+-- The dashboard logs in before it subscribes, so it reads and writes as
+-- `authenticated`. Reading is open to any account. Writing needs the
+-- signed-in account to be marked as an admin:
+--
+--   update public.profiles set role = 'admin' where username = 'your-admin-username';
+--
+-- Until that is done the dashboard loads normally but every save is
+-- rejected with `new row violates row-level security policy`. It also
+-- shows a warning banner with the exact command to run.
+-- ============================================================================
+
+
+-- ---------------------------------------------------------------------------
+-- products.updated_at accuracy
+--
+-- Kept accurate automatically: supabase/schema.sql (section 1a-2) defines
+-- set_updated_at() and the products_set_updated_at trigger, which stamp
+-- updated_at on every UPDATE. Shown here only for reference -- do not add a
+-- second copy of the trigger; it is already active once the main schema runs.
+--
+-- (Previously nothing updated the column, so it stayed equal to created_at
+-- for the life of the row, and place_order() was the only writer.)
+-- ---------------------------------------------------------------------------
+
+-- create or replace function public.set_updated_at()
+-- returns trigger
+-- language plpgsql
+-- as $$
+-- begin
+--     new.updated_at = now();
+--     return new;
+-- end;
+-- $$;
+--
+-- drop trigger if exists products_set_updated_at on public.products;
+-- create trigger products_set_updated_at
+--     before update on public.products
+--     for each row
+--     execute function public.set_updated_at();
+
+
+-- ---------------------------------------------------------------------------
+-- REQUIRED FOR IMAGE UPLOADS: storage.objects write policies
+--
+-- Creating a public bucket in the dashboard grants READ automatically, but not
+-- WRITE. Uploads insert rows into storage.objects, so without these policies
+-- every upload is rejected even while signed in -- the same trap you hit with
+-- Firebase Storage.
+--
+-- These are NOT applied by the authoritative schema's section 1d (that is
+-- featured slides). They now live in section 2d of supabase/schema.sql,
+-- which creates the two buckets and the read/write policies with owner
+-- checks. Re-run that section rather than pasting anything here: Postgres
+-- ORs permissive policies together rather than replacing them, so a second
+-- broad set would silently widen access instead of narrowing it.
+--
+-- The originals, kept here only for reference. They are broader than what
+-- section 2d installs -- any authenticated user could write to either
+-- bucket, and the update/delete ones had no owner check -- so do not
+-- paste them over the real policies:
+--
+-- create policy "public read"
+--   on storage.objects for select
+--   using (
+--     bucket_id in (
+--       select id from storage.buckets
+--       where name in ('product-images', 'avatars')
+--     )
+--   );
+--
+-- create policy "authenticated upload"
+--   on storage.objects for insert to authenticated
+--   with check (
+--     bucket_id in (
+--       select id from storage.buckets
+--       where name in ('product-images', 'avatars')
+--     )
+--   );
+--
+-- create policy "authenticated update"
+--   on storage.objects for update to authenticated
+--   using (
+--     bucket_id in (
+--       select id from storage.buckets
+--       where name in ('product-images', 'avatars')
+--     )
+--   );
+--
+-- create policy "authenticated delete"
+--   on storage.objects for delete to authenticated
+--   using (
+--     bucket_id in (
+--       select id from storage.buckets
+--       where name in ('product-images', 'avatars')
+--     )
+--   );
+
+
+-- ---------------------------------------------------------------------------
+-- OPTIONAL: index products.created_at
+--
+-- The dashboard loads the inventory ordered by created_at. That is a sort over
+-- the whole table, which is fine at demo scale and only starts to matter in the
+-- thousands of rows.
+-- ---------------------------------------------------------------------------
+
+-- create index if not exists products_created_at_idx
+--   on public.products (created_at);
+
+
+-- ---------------------------------------------------------------------------
+-- §5  FEATURED SLIDES -- see the authoritative schema instead
+--
+-- `featured_slides` is created and secured in the project's real schema file
+-- (the one with tables, RLS policies, the signup trigger and the realtime
+-- publication), sections 1d and 2. Do NOT recreate the table or its policies
+-- here. Postgres ORs permissive policies together rather than overriding them,
+-- so a second "anyone may write" policy would silently defeat the admin-only
+-- gate the real schema installs, and the storefront's publishable key would be
+-- able to rewrite the carousel.
+--
+-- The `description` column this dashboard writes is now part of the
+-- authoritative schema, so there is nothing outstanding here.
+--
+-- Moving to "every slide has a product" is a two-step manual change,
+-- listed in section 1d-2 of the authoritative schema. It cannot be done
+-- in one statement, because the not-null constraint fails while any
+-- standalone slide is still stored.
+--
+-- Two things to remember if you ever add a column to this table from the
+-- dashboard side:
+--
+--   1. Add it to the authoritative schema first, with
+--        alter table public.featured_slides add column if not exists <col> <type>;
+--      Otherwise every slide save fails with
+--      "Could not find the '<col>' column of 'featured_slides' in the
+--      schema cache".
+--
+--   2. Then reload PostgREST's cache:
+--        notify pgrst, 'reload schema';
+--      Without it the same error persists for a minute or two even after
+--      the column really exists.
+-- ---------------------------------------------------------------------------
+

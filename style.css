@@ -1,0 +1,682 @@
+:root {
+    --primary: #c25e7a;
+    --primary-dark: #9c4760;
+    --primary-soft: #fcebef;
+    --primary-light: #e77691;
+    --accent-glow: rgba(194, 94, 122, 0.15);
+    
+    --bg-app: #fbf6f2;
+    --surface: #ffffff;
+    --surface-alt: #fdf8f4;
+    
+    --text-main: #0f172a;
+    --text-muted: #7d7069;
+    --border-color: #ece2da;
+    
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 10px 25px -3px rgba(15, 23, 42, 0.07), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+    --shadow-lg: 0 20px 40px -10px rgba(194, 94, 122, 0.12);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body.admin-app-body {
+    min-height: 100vh;
+    background-color: var(--bg-app);
+    background-image: 
+        radial-gradient(circle at 10% 10%, rgba(194, 94, 122, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(240, 166, 184, 0.06) 0%, transparent 40%);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* App Header */
+.app-topbar {
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px rgba(194, 94, 122, 0.25);
+}
+
+.login-brand-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 24px rgba(194, 94, 122, 0.3);
+}
+
+.brand-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.3px;
+}
+
+.brand-subtitle {
+    font-size: 0.77rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    border-radius: 50rem;
+}
+
+.user-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.current-user {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.btn-outline-light-custom {
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.btn-outline-light-custom:hover {
+    background: var(--surface-alt);
+    border-color: #cbd5e1;
+    color: var(--primary-dark);
+}
+
+/* Dashboard Welcome Banner */
+.dashboard-welcome-card {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-welcome-card::after {
+    content: "";
+    position: absolute;
+    right: -30px;
+    bottom: -30px;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Login Card */
+.login-card {
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+}
+
+/* General Cards */
+.card {
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-title {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1.1rem;
+    letter-spacing: -0.2px;
+}
+
+/* Form Controls */
+.form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
+}
+
+.form-control {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--surface-alt);
+    padding: 0.7rem 0.95rem;
+    font-size: 0.92rem;
+    color: var(--text-main);
+    transition: all 0.2s ease;
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    background: var(--surface);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.form-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* Buttons */
+.btn {
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.65rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border: none;
+    box-shadow: 0 4px 12px rgba(194, 94, 122, 0.25);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    box-shadow: 0 6px 16px rgba(194, 94, 122, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Table Enhancements */
+.table {
+    margin-bottom: 0;
+}
+
+.table > thead > tr > th {
+    background-color: var(--surface-alt);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.77rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.85rem 1rem;
+}
+
+.table > tbody > tr > td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 0.92rem;
+}
+
+.table-hover > tbody > tr:hover {
+    background-color: var(--primary-soft);
+}
+
+/* Product Thumbnails */
+.product-thumb-wrap {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-color);
+    z-index: 1;
+}
+
+.product-thumb {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 2;
+}
+
+.product-thumb-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.15rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: #f7f2ed;
+    z-index: 1;
+}
+
+/* Description Column */
+.description-cell {
+    max-width: 280px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Image Previews */
+.image-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.image-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Upload Progress */
+.upload-progress {
+    margin-top: 0.75rem;
+}
+
+.upload-progress .progress {
+    height: 6px;
+    background: #ece2da;
+    border-radius: 50rem;
+    overflow: hidden;
+}
+
+.upload-progress .progress-bar {
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+}
+
+/* Actions Cell */
+.actions-cell {
+    white-space: nowrap;
+}
+
+.actions-cell .btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+}
+
+/* Modal styling */
+.modal-content {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+}
+
+.modal-footer {
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+}
+
+/* Utility Animations */
+#dashboardSection {
+    animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Panel switcher (Products / Featured Slides)
+   --------------------------------------------------------------------------- */
+
+.dashboard-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1.1rem;
+    transition: all 0.2s ease;
+}
+
+.dashboard-tabs .nav-link:hover {
+    color: var(--primary-dark);
+    border-color: #f3ccd7;
+    background: var(--surface-alt);
+}
+
+.dashboard-tabs .nav-link.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(194, 94, 122, 0.25);
+}
+
+/* Bootstrap styles selects separately from inputs; match them to .form-control */
+.form-select {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-alt);
+    padding: 0.7rem 0.95rem;
+    font-size: 0.92rem;
+    color: var(--text-main);
+}
+
+.form-select:focus {
+    border-color: var(--primary);
+    background-color: var(--surface);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+
+/* ---------------------------------------------------------------------------
+   Featured slide list
+   --------------------------------------------------------------------------- */
+
+/* Hidden slides stay in the list -- the admin needs to find them again -- but
+   read as muted so it is obvious they are not on the storefront right now. */
+.slide-row-hidden .slide-name-cell,
+.slide-row-hidden .slide-meta-cell {
+    opacity: 0.55;
+}
+
+/* One picture per slide: the banner. The item it advertises is a real
+   product with its own photo, shown on the product page. */
+.slide-preview-set {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.slide-shot {
+    margin: 0;
+    text-align: center;
+}
+
+.slide-shot-box {
+    position: relative;
+    overflow: hidden;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.slide-shot-banner {
+    width: 78px;
+    height: 46px;
+}
+
+.slide-shot img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.slide-shot-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: #f7f2ed;
+}
+
+.slide-shot figcaption {
+    margin-top: 3px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.slide-name-cell {
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.slide-meta-cell {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* Clamped to two lines so one long description cannot stretch the whole table */
+.slide-desc-cell {
+    margin-top: 0.25rem;
+    max-width: 320px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.order-cell {
+    width: 68px;
+}
+
+.order-cell .form-control {
+    padding: 0.3rem 0.45rem;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.order-cell .form-control:focus {
+    text-align: left;
+}
+
+/* Chevrons for the up/down reorder buttons */
+.order-btn {
+    padding: 0.3rem 0.45rem !important;
+    line-height: 1;
+}
+
+/* Flags a slide the app will silently skip: no product and nothing to draw */
+.slide-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-sm);
+}
+
+.slide-warning::before {
+    content: "!";
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: #f59e0b;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+.badge-soft-success {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.badge-soft-muted {
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+
+/* Stock column. The colour is the point: a sold out or nearly gone
+   product should be obvious while scrolling the inventory, not only
+   after opening it. These match the app's StockLabel palette. */
+.stock-cell {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #2e7d32;
+    white-space: nowrap;
+}
+
+.stock-cell.stock-low {
+    color: #ef6c00;
+}
+
+.stock-cell.stock-out {
+    color: #d32f2f;
+}
+
+
+/* ============================================================
+   Order log
+   ============================================================ */
+
+.order-id-cell {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.order-date-cell,
+.order-items-cell {
+    font-size: 0.88rem;
+    white-space: nowrap;
+}
+
+.order-customer-cell {
+    font-size: 0.9rem;
+}
+
+.order-total-cell {
+    font-size: 0.9rem;
+    color: #c25e7a;
+    white-space: nowrap;
+}
+
+.order-row-cancelled td {
+    /* Cancelled orders stay listed for the record, just visibly muted */
+    opacity: 0.6;
+}
+
+.order-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.order-pill.pill-completed {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.order-pill.pill-cancelled {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+#orderModal .text-muted.small.text-uppercase {
+    letter-spacing: 0.04em;
+}
+
+#orderDetailEmail:empty {
+    display: none;
+}

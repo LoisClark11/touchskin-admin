@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TouchSkin Admin</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CDN for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="style.css" rel="stylesheet">
+    <!-- Bootstrap 5 JS bundle (needed for the edit modal) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!--
+        Supabase JS client, resolved by the import map below.
+
+        The dashboard is a no-build ES module app: no npm install, no bundler.
+        If you later switch to a bundler, delete the importmap and use
+        "import ... from '@supabase/supabase-js'" as normal.
+    -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+        }
+    }
+    </script>
+</head>
+<body class="admin-app-body">
+
+<div class="app-layout">
+    <!-- Sidebar / Brand header area or Top Nav Header -->
+    <header class="app-topbar container-xxl">
+        <div class="d-flex align-items-center justify-content-between py-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                </div>
+                <div>
+                    <h1 class="brand-title mb-0">TouchSkin Admin</h1>
+                    <p class="brand-subtitle mb-0">Skincare Store Management</p>
+                </div>
+            </div>
+            <div id="userProfileArea" class="d-none align-items-center gap-3">
+                <div class="user-badge">
+                    <span class="user-dot"></span>
+                    <span id="currentUser" class="current-user"></span>
+                </div>
+                <button type="button" id="logoutButton" class="btn btn-sm btn-outline-light-custom">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container-xxl py-4">
+        <div class="row justify-content-center">
+            <div class="col-xl-10">
+                <section id="loginSection" class="card login-card border-0">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <div class="login-brand-icon mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                            </div>
+                            <h2 class="fw-bold mb-1">Welcome Back</h2>
+                            <p class="text-muted small">Sign in to manage your TouchSkin catalog</p>
+                        </div>
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" id="email" class="form-control"
+                                    placeholder="admin@example.com" required>
+                            </div>
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="password" class="form-label mb-0">Password</label>
+                                </div>
+                                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                            <p id="loginMessage" class="text-danger small mb-3" role="alert"></p>
+                            <button type="submit" id="loginButton" class="btn btn-primary w-100 py-2.5 shadow-sm">Sign In to Dashboard</button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="dashboardSection" class="d-none">
+                    <!-- The admin-role warning that used to live here is gone:
+                         the dashboard now verifies role = 'admin' on every auth
+                         event and signs anyone else straight back out with a
+                         notice on the login screen (see enterDashboard in
+                         app.js). There is no "signed in but read-only" state
+                         left to warn about. -->
+
+                    <!-- Dashboard Stat Cards / Welcome Banner -->
+                    <div class="dashboard-welcome-card mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="fw-bold text-white mb-1">TouchSkin Control Center</h3>
+                                <p class="text-white-50 mb-0">Real-time sync between your storefront and this dashboard.</p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                <div class="badge bg-white bg-opacity-10 text-white px-3 py-2 rounded-pill fw-normal">
+                                    <span class="spinner-grow spinner-grow-sm text-success me-1" role="status"></span> Live Database Connected
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel switcher: catalog, the storefront carousel, order log -->
+                    <ul class="nav nav-pills dashboard-tabs mb-4" id="dashboardTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link active" data-panel="products" role="tab"
+                                aria-selected="true" aria-controls="productsPanel">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+                                Products
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link" data-panel="slides" role="tab"
+                                aria-selected="false" aria-controls="slidesPanel">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+                                Featured Slides
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link" data-panel="orders" role="tab"
+                                aria-selected="false" aria-controls="ordersPanel">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12l1.5 4.5V20a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V6.5L6 2z"/><path d="M9 10a3 3 0 0 0 6 0"/></svg>
+                                Orders
+                                <span id="orderCountBadge" class="badge bg-light text-dark ms-1 d-none"></span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- ================= Products panel ================= -->
+                    <div id="productsPanel">
+                    <!-- Input Form -->
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="card-title mb-0 border-0 pb-0">Add New Product</h5>
+                                <span class="badge bg-primary-soft text-primary px-2.5 py-1 rounded-pill small">Catalog Item</span>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label">Product Name</label>
+                                    <input type="text" id="name" class="form-control" placeholder="e.g., Vitamin C Serum">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="price" class="form-label">Price (PHP)</label>
+                                    <input type="number" id="price" class="form-control" placeholder="0.00" min="0" step="0.01">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="stock" class="form-label">Stock (units on hand)</label>
+                                    <input type="number" id="stock" class="form-control" placeholder="0" min="0" step="1" value="0">
+                                    <div class="form-text">Falls automatically as orders are placed. 0 means sold out.</div>
+                                </div>
+                                
+                                <div class="col-md-5">
+                                    <label for="imageFile" class="form-label">Upload Image File</label>
+                                    <input type="file" id="imageFile" class="form-control" accept="image/*">
+                                    <div class="form-text">JPG, PNG, WebP or GIF. Auto-optimized.</div>
+                                </div>
+                                <div class="col-md-7">
+                                    <label for="imageUrl" class="form-label">Or Image URL</label>
+                                    <input type="url" id="imageUrl" class="form-control"
+                                        placeholder="https://example.com/product.jpg">
+                                </div>
+                                <div class="col-12">
+                                    <div id="addImagePreview" class="image-preview d-none">
+                                        <img id="addImagePreviewImg" src="" alt="Selected product image preview">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <span class="small fw-semibold text-dark">Image Selected</span>
+                                            <button type="button" id="clearImageButton" class="btn btn-sm btn-outline-danger mt-1">
+                                                Remove Image
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="description" class="form-label">Description & Details</label>
+                                    <textarea id="description" class="form-control" rows="3" maxlength="1000"
+                                        placeholder="Describe specifications, features, or product condition..."></textarea>
+                                    <div class="form-text text-end"><span id="descriptionCount">0</span>/1000 characters</div>
+                                </div>
+                                <div class="col-12">
+                                    <p id="addMessage" class="text-danger mb-0 small" role="alert"></p>
+                                    <div id="addProgress" class="upload-progress d-none">
+                                        <div class="progress" role="status" aria-live="polite">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                                style="width: 100%"></div>
+                                        </div>
+                                        <div id="addProgressText" class="form-text"></div>
+                                    </div>
+                                </div>
+                                <div class="col-12 text-end mt-2">
+                                    <button type="button" id="addButton" class="btn btn-primary px-4">Add Product to Catalog</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Data Table -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="card-title mb-0 border-0 pb-0">Live Product Catalog</h5>
+                                <div class="input-group input-group-sm w-auto" style="max-width: 240px;">
+                                    <span class="input-group-text bg-light border-end-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+                                    <input type="text" id="inventorySearch" class="form-control form-control-sm border-start-0 ps-0" placeholder="Filter products...">
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mt-2">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3" style="width: 80px;">Image</th>
+                                            <th>Product Name</th>
+                                            <th>Price</th>
+                                            <th style="width: 110px;">Stock</th>
+                                            <th>Description</th>
+                                            <th class="text-end pe-3" style="width: 150px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody">
+                                        <!-- Data injects here automatically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    </div><!-- /productsPanel -->
+
+                    <!-- ================= Featured Slides panel ================= -->
+                    <div id="slidesPanel" class="d-none">
+
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <h5 class="card-title mb-0 border-0 pb-0">Add Featured Slide</h5>
+                                    <span class="badge bg-primary-soft text-primary px-2.5 py-1 rounded-pill small">Storefront Carousel</span>
+                                </div>
+                                <p class="form-text mb-4">
+                                    The slide is the banner and nothing else. Tapping it opens the linked
+                                    product, which carries its own photo. Blank fields are fine &mdash; the
+                                    app fills them in from that product.
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="slideProduct" class="form-label">Linked Product
+                                            <span class="text-muted fw-normal">(required)</span>
+                                        </label>
+                                        <select id="slideProduct" class="form-select">
+                                            <option value="">Choose a product&hellip;</option>
+                                        </select>
+                                        <div id="slideInheritHint" class="form-text d-none"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="slideButtonLabel" class="form-label">Button Label</label>
+                                        <input type="text" id="slideButtonLabel" class="form-control"
+                                            placeholder="Order Now" maxlength="40">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="slideOrder" class="form-label">Display Order</label>
+                                        <input type="number" id="slideOrder" class="form-control" value="0" step="1">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="slideBannerFile" class="form-label">Featured Image</label>
+                                        <input type="file" id="slideBannerFile" class="form-control"
+                                            accept="image/jpeg,image/png,image/webp,image/gif">
+                                        <div class="form-text">The one picture a slide needs. Blank falls back to the product's photo.</div>
+                                        <div id="slideBannerPreview" class="image-preview d-none mt-2">
+                                            <img id="slideBannerPreviewImg" src="" alt="Banner image preview">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <span class="small fw-semibold text-dark">Banner selected</span>
+                                                <button type="button" id="slideClearBanner" class="btn btn-sm btn-outline-danger mt-1">Remove Banner</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="slideTitle" class="form-label">Headline
+                                            <span class="text-muted fw-normal">(optional)</span>
+                                        </label>
+                                        <input type="text" id="slideTitle" class="form-control" maxlength="80"
+                                            placeholder="e.g. Midyear Mega Sale">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="slideSubtitle" class="form-label">Subtitle
+                                            <span class="text-muted fw-normal">(optional)</span>
+                                        </label>
+                                        <input type="text" id="slideSubtitle" class="form-control" maxlength="120"
+                                            placeholder="Smaller line under the headline">
+                                    </div>
+
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="slideActive" checked>
+                                            <label class="form-check-label" for="slideActive">Show in app</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div id="slideWarning" class="slide-warning d-none" role="alert"></div>
+                                    </div>
+                                    <div class="col-12">
+                                        <p id="slideMessage" class="text-danger mb-0 small" role="alert"></p>
+                                        <div id="slideProgress" class="upload-progress d-none">
+                                            <div class="progress" role="status" aria-live="polite">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                                    style="width: 100%"></div>
+                                            </div>
+                                            <div id="slideProgressText" class="form-text"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 text-end mt-2">
+                                        <button type="button" id="slideAddButton" class="btn btn-primary px-4">Add Slide to Carousel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h5 class="card-title mb-0 border-0 pb-0">Live Featured Slides</h5>
+                                    <div class="input-group input-group-sm w-auto" style="max-width: 240px;">
+                                        <span class="input-group-text bg-light border-end-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+                                        <input type="text" id="slideSearch" class="form-control form-control-sm border-start-0 ps-0" placeholder="Filter slides...">
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mt-2">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="ps-3" style="width: 90px;">Order</th>
+                                                <th style="width: 170px;">Images</th>
+                                                <th>Slide</th>
+                                                <th style="width: 130px;">Status</th>
+                                                <th class="text-end pe-3" style="width: 230px;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="slideTableBody">
+                                            <!-- Data injects here automatically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /slidesPanel -->
+
+                    <!-- ================= Orders panel =================
+                         Read only. The database refuses an UPDATE from an
+                         admin, so this panel can show history but cannot
+                         rewrite it. -->
+                    <div id="ordersPanel" class="d-none">
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                    <div>
+                                        <h5 class="card-title mb-0 border-0 pb-0">Order Log</h5>
+                                        <p class="form-text mb-0 mt-1">
+                                            Every order placed from the app, newest first. Read only.
+                                        </p>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="input-group input-group-sm w-auto" style="max-width: 240px;">
+                                            <span class="input-group-text bg-light border-end-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+                                            <input type="text" id="orderSearch" class="form-control form-control-sm border-start-0 ps-0"
+                                                placeholder="Name, email or order #...">
+                                        </div>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Filter by status">
+                                            <button type="button" class="btn btn-outline-secondary active"
+                                                data-order-filter="all" aria-pressed="true">All</button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                data-order-filter="Completed" aria-pressed="false">Completed</button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                data-order-filter="Cancelled" aria-pressed="false">Cancelled</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mt-2">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="ps-3" style="width: 110px;">Order #</th>
+                                                <th style="width: 165px;">Date</th>
+                                                <th>Customer</th>
+                                                <th style="width: 90px;">Items</th>
+                                                <th style="width: 120px;">Total</th>
+                                                <th style="width: 120px;">Status</th>
+                                                <th class="text-end pe-3" style="width: 110px;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="orderTableBody">
+                                            <!-- Data injects here automatically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p id="orderMessage" class="text-danger mb-0 small" role="alert"></p>
+                            </div>
+                        </div>
+                    </div><!-- /ordersPanel -->
+                </section>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-0 py-3">
+                <h5 class="modal-title fw-bold text-dark" id="orderModalLabel">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Every value below is customer-typed text. It is filled
+                     with textContent from app.js rather than markup, so a
+                     customer who names themselves "<script>..." cannot run
+                     code in an admin's browser. -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold mb-1">Customer</div>
+                        <div id="orderDetailCustomer" class="fw-semibold"></div>
+                        <div id="orderDetailEmail" class="text-muted small"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold mb-1">Placed</div>
+                        <div id="orderDetailDate"></div>
+                        <div id="orderDetailStatus" class="mt-1"></div>
+                    </div>
+                    <div class="col-12">
+                        <div class="text-muted small text-uppercase fw-semibold mb-1">Delivery address</div>
+                        <div id="orderDetailAddress"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold mb-1">Payment</div>
+                        <div id="orderDetailPayment"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold mb-1">Bought via</div>
+                        <div id="orderDetailPurchaseType"></div>
+                    </div>
+                </div>
+
+                <div class="text-muted small text-uppercase fw-semibold mb-2">Items</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item</th>
+                                <th class="text-end" style="width: 90px;">Price</th>
+                                <th class="text-end" style="width: 70px;">Qty</th>
+                                <th class="text-end" style="width: 110px;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderDetailItems">
+                            <!-- Data injects here automatically -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end text-muted">Subtotal</td>
+                                <td id="orderDetailSubtotal" class="text-end"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end text-muted">Delivery</td>
+                                <td id="orderDetailDelivery" class="text-end"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">Total</td>
+                                <td id="orderDetailTotal" class="text-end fw-bold"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0 py-3">
+                <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-0 py-3">
+                <h5 class="modal-title fw-bold text-dark" id="editModalLabel">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="editName" class="form-label">Product Name</label>
+                    <input type="text" id="editName" class="form-control" placeholder="Product Name">
+                </div>
+                <div class="mb-3">
+                    <label for="editPrice" class="form-label">Price (PHP)</label>
+                    <input type="number" id="editPrice" class="form-control" min="0" step="0.01" placeholder="Price">
+                </div>
+                <div class="mb-3">
+                    <label for="editStock" class="form-label">Stock (units on hand)</label>
+                    <input type="number" id="editStock" class="form-control" min="0" step="1" placeholder="0">
+                    <div class="form-text">Lowered automatically by every order. Set it here to restock.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="editDescription" class="form-label">Description</label>
+                    <textarea id="editDescription" class="form-control" rows="3" maxlength="1000"
+                        placeholder="Describe the product..."></textarea>
+                    <div class="form-text text-end"><span id="editDescriptionCount">0</span>/1000</div>
+                </div>
+                <div class="bg-light p-3 rounded-3 mb-3 border">
+                    <label class="form-label small fw-semibold text-uppercase text-muted mb-2">Product Image</label>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label for="editImageFile" class="form-label small text-muted mb-1">Upload replacement</label>
+                            <input type="file" id="editImageFile" class="form-control form-control-sm" accept="image/*">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editImageUrl" class="form-label small text-muted mb-1">Or paste image URL</label>
+                            <input type="url" id="editImageUrl" class="form-control form-control-sm"
+                                placeholder="https://...">
+                        </div>
+                    </div>
+                    <div id="editImagePreview" class="image-preview d-none mt-2">
+                        <img id="editImagePreviewImg" src="" alt="Current product image preview">
+                        <span class="small text-muted">Current or new image preview</span>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="removeImageCheck">
+                        <label class="form-check-label small" for="removeImageCheck">Remove current image</label>
+                    </div>
+                </div>
+                <p id="editMessage" class="text-danger mb-0 small" role="alert"></p>
+                <div id="editProgress" class="upload-progress d-none">
+                    <div class="progress" role="status" aria-live="polite">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                            style="width: 100%"></div>
+                    </div>
+                    <div id="editProgressText" class="form-text"></div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0 py-3">
+                <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="saveButton" class="btn btn-primary px-4">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Featured Slide Modal -->
+<div class="modal fade" id="editSlideModal" tabindex="-1" aria-labelledby="editSlideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-0 py-3">
+                <h5 class="modal-title fw-bold text-dark" id="editSlideModalLabel">Edit Featured Slide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Only ever holds a file we uploaded ourselves (no pasted URLs),
+                     which is what lets Remove clean the bucket without guessing. -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="slideEditProduct" class="form-label">Linked Product
+                            <span class="text-muted fw-normal">(required)</span>
+                        </label>
+                        <select id="slideEditProduct" class="form-select">
+                            <option value="">Choose a product&hellip;</option>
+                        </select>
+                        <div id="slideEditInheritHint" class="form-text d-none"></div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="slideEditButtonLabel" class="form-label">Button Label</label>
+                        <input type="text" id="slideEditButtonLabel" class="form-control" maxlength="40"
+                            placeholder="Order Now">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="slideEditOrder" class="form-label">Display Order</label>
+                        <input type="number" id="slideEditOrder" class="form-control" step="1">
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded-3 border h-100">
+                            <label for="slideEditBannerFile" class="form-label">Replace Featured Image</label>
+                            <input type="file" id="slideEditBannerFile" class="form-control form-control-sm"
+                                accept="image/jpeg,image/png,image/webp,image/gif">
+                            <div id="slideEditBannerPreview" class="image-preview mt-2 mb-0">
+                                <img id="slideEditBannerPreviewImg" src="" alt="Current banner preview">
+                                <span class="small text-muted">Current banner</span>
+                            </div>
+                            <div class="form-check mt-2 mb-0">
+                                <input class="form-check-input" type="checkbox" id="slideEditRemoveBanner">
+                                <label class="form-check-label small" for="slideEditRemoveBanner">Remove current banner</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="slideEditTitle" class="form-label">Headline</label>
+                        <input type="text" id="slideEditTitle" class="form-control" maxlength="80"
+                            placeholder="e.g. Midyear Mega Sale">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="slideEditSubtitle" class="form-label">Subtitle</label>
+                        <input type="text" id="slideEditSubtitle" class="form-control" maxlength="120"
+                            placeholder="Smaller line under the headline">
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="slideEditActive">
+                            <label class="form-check-label" for="slideEditActive">Show in app</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div id="slideEditWarning" class="slide-warning d-none" role="alert"></div>
+                    </div>
+                    <div class="col-12">
+                        <p id="slideEditMessage" class="text-danger mb-0 small" role="alert"></p>
+                        <div id="slideEditProgress" class="upload-progress d-none">
+                            <div class="progress" role="status" aria-live="polite">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                    style="width: 100%"></div>
+                            </div>
+                            <div id="slideEditProgressText" class="form-text"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0 py-3">
+                <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="slideSaveButton" class="btn btn-primary px-4">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
